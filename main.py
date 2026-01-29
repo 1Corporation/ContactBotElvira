@@ -5,7 +5,7 @@ import aiogram
 import dotenv
 from aiogram import Dispatcher
 
-from routers import command_router, states_router
+from routers import command_router, states_router, join_request_router
 from database import create_tables
 
 dotenv.load_dotenv()
@@ -17,6 +17,7 @@ dp = Dispatcher()
 
 dp.include_router(command_router)
 dp.include_router(states_router)
+dp.include_router(join_request_router)
 
 
 def main():

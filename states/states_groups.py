@@ -6,3 +6,4 @@ class ABP(StatesGroup):
     fcs = State()
     city = State()
     school = State()
+    phone = State()
