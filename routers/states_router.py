@@ -56,5 +56,5 @@ async def handle_phone(message: Message, state: FSMContext, bot: Bot):
 
     phone = message.contact.phone_number
     await state.update_data(phone=phone)
-    await message.answer("Спасибо! Номер получен. Вы записаны в базу данных!", reply_markup=ReplyKeyboardRemove())
+    await message.answer("Спасибо! Номер получен. Вы записаны в базу данных! Ожидайте принятия запроса на вступление в чат.", reply_markup=ReplyKeyboardRemove())
     await stop_fsm(message, state, bot)

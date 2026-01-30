@@ -1,3 +1,4 @@
 from routers.command_router import command_router
 from routers.states_router import states_router
 from routers.join_request_router import join_request_router
+from routers.callback_query_router import callback_query_router

@@ -5,7 +5,9 @@ import dotenv
 from aiogram import Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.types import User, Message
+from aiogram.utils.keyboard import InlineKeyboardMarkup, InlineKeyboardButton
 
+from states.callback_data import AcceptRequest
 from states.states_groups import ABP
 
 dotenv.load_dotenv()
@@ -41,12 +43,22 @@ async def write_to_database(data: dict, user: User):
 async def stop_fsm(message: Message, state: FSMContext, bot: Bot):
     data = await state.get_data()
     await write_to_database(data, message.from_user)
-
-    try:
-        await bot.approve_chat_join_request(int(os.getenv("CHAT_ID")), message.from_user.id)
-    except:
-        pass
-
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[[
+            InlineKeyboardButton(text="Принять",
+                                 callback_data=AcceptRequest(
+                                     accept=True,
+                                     user_id=message.user.id).pack()
+                                 ),
+            InlineKeyboardButton(
+                text="Отклонить",
+                callback_data=AcceptRequest(
+                    accept=False,
+                    user_id=message.from_user.id
+                ).pack()
+            )
+        ]]
+    )
     await state.set_state(None)
     await bot.send_message(int(os.getenv("ADMIN_CHAT_ID")),
                            f"Новый запрос\n\nФИО: {data["fcs"]}\nГород: {data["city"]}\nШкола: {data["school"]}\nНомер телефона: {data["phone"]}")
@@ -54,5 +66,6 @@ async def stop_fsm(message: Message, state: FSMContext, bot: Bot):
         int(os.getenv("ADMIN_CHAT_ID")),
         first_name=data["fcs"],
         last_name=f"{data["city"]} {data["school"]}",
-        phone_number=data["phone"]
+        phone_number=data["phone"],
+        reply_markup=keyboard
     )
