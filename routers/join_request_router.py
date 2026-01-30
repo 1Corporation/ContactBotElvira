@@ -9,7 +9,6 @@ join_request_router = Router()
 
 @join_request_router.chat_join_request()
 async def join_request(event: ChatJoinRequest, bot: Bot, dispatcher: Dispatcher):
-    await bot.send_message(event.user_chat_id, "Welcome!")
 
     key = StorageKey(
         bot_id=bot.id,

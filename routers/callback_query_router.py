@@ -16,9 +16,9 @@ CHAT = int(os.getenv("CHAT_ID"))
 DATABASE_NAME = os.getenv("DATABASE_NAME")
 
 
-@callback_query_router.callback_query(AcceptRequest)
-async def accept_request_callback_query_router(message: Message, callback_query: CallbackQuery, bot: Bot):
-    if message.chat.id != ADMIN_CHAT:
+@callback_query_router.callback_query(AcceptRequest.filter())
+async def accept_request_callback_query_router(callback_query: CallbackQuery, bot: Bot):
+    if callback_query.message.chat.id != ADMIN_CHAT:
         return
 
     callback_data = AcceptRequest.unpack(callback_query.data)
@@ -29,8 +29,6 @@ async def accept_request_callback_query_router(message: Message, callback_query:
         except:
             pass
 
-        await message.delete()
-
     else:
         async with aiosqlite.connect(DATABASE_NAME) as db:
             await db.execute(
@@ -38,7 +36,7 @@ async def accept_request_callback_query_router(message: Message, callback_query:
                 (callback_data.user_id,))
             await db.commit()
 
-    await message.delete()
+    await callback_query.message.edit_reply_markup(reply_markup=None)
     try:
         await bot.decline_chat_join_request(CHAT, callback_data.user_id)
         await bot.send_message(callback_data.user_id,
