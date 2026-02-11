@@ -1,0 +1,85 @@
+name: deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup python
+        uses: actions/setup-python@v6
+
+      - name: Create env files
+        env:
+          BOT_TOKEN: ${{secrets.BOT_TOKEN}}
+        run: |
+          echo "BOT_TOKEN=$BOT_TOKEN" >> .env.telegram
+
+      - name: Start VPN
+        run: |
+            install -Dm 400 <(echo "${{ secrets.VPN_KNOWN_HOSTS }}") ~/.ssh/known_hosts
+            install -Dm 400 <(echo "${{ secrets.VPN_PRIVATE_KEY }}") vpn_id_rsa
+               
+            ssh -D 1081 -f -N -C -i vpn_id_rsa -p ${{ secrets.VPN_PORT }} ${{ secrets.VPN_USER }}@${{ secrets.VPN_HOST }}
+            sleep 2
+
+      - name: Install dependencies
+        run: |
+          apt update
+          apt install -y netcat-openbsd 
+
+      - name: Deploy
+        run: |
+          zip -r "$ARCHIVE_NAME" .
+          ls -lh *.zip 
+    
+          install -Dm 400 <(echo "$SSH_KNOWN_HOSTS") ~/.ssh/known_hosts
+          install -Dm 400 <(echo "$SSH_DEPLOY_KEY") deploy_key
+          
+          stdbuf -oL -eL curl --socks5 127.0.0.1:1081 --no-buffer https://ifconfig.me 2>&1 | tee /dev/stderr
+          scp -o "ProxyCommand=nc -x localhost:1081 $SSH_HOST $SSH_DEPLOY_PORT" \
+              -i deploy_key \
+              -P "$SSH_DEPLOY_PORT" \
+              "$ARCHIVE_NAME" \
+              "$SSH_USER@$SSH_HOST:$ARCHIVE_NAME" \
+              2>&1 | tee /dev/stderr
+        shell: bash
+        env:
+          SSH_KNOWN_HOSTS: ${{secrets.SSH_KNOWN_HOSTS}}
+          SSH_DEPLOY_KEY: ${{secrets.SSH_PRIVATE_KEY}}
+          SSH_DEPLOY_PORT: ${{secrets.SSH_DEPLOY_PORT}}
+          SSH_USER: ${{secrets.SSH_USER}}
+          SSH_HOST: ${{secrets.SSH_HOST}}
+          ARCHIVE_NAME: ${{vars.ARCHIVE_NAME}}
+
+      - name: Unpack
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{secrets.SSH_HOST}}
+          key: ${{secrets.SSH_PRIVATE_KEY}}
+          port: ${{secrets.SSH_DEPLOY_PORT}}
+          username: ${{secrets.SSH_USER}}
+          proxy_host: ${{secrets.VPN_HOST}}
+          proxy_port: ${{secrets.VPN_PORT}}
+          proxy_key: ${{secrets.VPN_PRIVATE_KEY}}
+          proxy_username: ${{secrets.VPN_USER}}
+          script: |
+            set -e
+            rm -rf ${{ vars.DEPLOY_PATH }}
+            mkdir ${{ vars.DEPLOY_PATH }}
+            mv ${{ vars.ARCHIVE_NAME }} ${{ vars.DEPLOY_PATH }}
+            cd ${{ vars.DEPLOY_PATH }}
+            unzip ${{ vars.ARCHIVE_NAME }}
+            python3 -m venv venv
+            venv/bin/python3 -m pip install -r requirements.txt
+            sudo systemctl restart request_accepter

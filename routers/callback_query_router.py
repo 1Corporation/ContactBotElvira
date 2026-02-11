@@ -26,7 +26,7 @@ async def accept_request_callback_query_router(callback_query: CallbackQuery, bo
     if callback_data.accept:
         try:
             await bot.approve_chat_join_request(CHAT, callback_data.user_id)
-        except:
+        except Exception:
             pass
 
     else:
@@ -41,5 +41,5 @@ async def accept_request_callback_query_router(callback_query: CallbackQuery, bo
         await bot.decline_chat_join_request(CHAT, callback_data.user_id)
         await bot.send_message(callback_data.user_id,
                                "Ваша заявка была отклонена. Возможно вы ввели невалидные данные. Попробуйте еще раз")
-    except:
+    except Exception:
         pass

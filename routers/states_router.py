@@ -7,22 +7,18 @@ from aiogram.fsm.context import FSMContext
 
 from states.manage_states import stop_fsm
 
-
 states_router = Router()
 
 
 @states_router.message(ABP.fcs)
 async def handle_fcs(message: Message, state: FSMContext):
-
     if len(message.text.split()) != 3:
         await message.answer("ФИО должно быть в формате `Фамилия Имя Отчество!`")
         return
 
     await state.update_data({"fcs": message.text})
     await state.set_state(ABP.city)
-    await message.answer("""
-В каком городе или населённом пункте ты живёшь? 
-    """)
+    await message.answer("В каком городе или населённом пункте ты живёшь?")
 
 
 @states_router.message(ABP.city)
@@ -50,7 +46,6 @@ async def handle_school(message: Message, state: FSMContext, bot: Bot):
     #     reply_markup=kb
     # )
 
-
 # @states_router.message(ABP.phone)
 # async def handle_phone(message: Message, state: FSMContext, bot: Bot):
 #     if message.contact.user_id != message.from_user.id:
@@ -61,4 +56,3 @@ async def handle_school(message: Message, state: FSMContext, bot: Bot):
 #     await state.update_data(phone=phone)
 #     await message.answer("Спасибо! Номер получен. Вы записаны в базу данных! Ожидайте принятия запроса на вступление в чат.", reply_markup=ReplyKeyboardRemove())
 #     await stop_fsm(message, state, bot)
-

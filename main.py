@@ -10,7 +10,6 @@ from database import create_tables
 
 dotenv.load_dotenv()
 
-
 bot = aiogram.Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher()
 

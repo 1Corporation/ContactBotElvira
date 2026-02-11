@@ -1,0 +1,30 @@
+name: build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+  workflow_call:
+
+jobs:
+  flake8:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -r requirements.txt  # Check requirements.txt is broken
+      - run: flake8 .
+
+
+#  unittest:
+#    runs-on: ubuntu-latest
+#    needs: flake8
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: actions/setup-python@v5
+#      - run: pip install -r requirements.txt
+#      - run: python3 -W ignore -m unittest discover tests "*_tests.py"
+
